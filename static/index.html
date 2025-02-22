@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* General Styles */
+        body {
+            background-color: #1A202C; /* Dark background */
+            color: #E2E8F0; /* Light gray text */
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 900px;
+            padding: 2rem;
+            background-color: #2D3748; /* Slightly lighter background */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            text-align: center;
+            color: #CBD5E0;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        #prompt {
+            flex: 1;
+            background-color: #4A5568;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            outline: none;
+            margin-right: 0.5rem;
+        }
+
+        button {
+            background-color: #48BB78;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        button:hover {
+            background-color: #38A169;
+        }
+
+        /* Response Area */
+        #response {
+            background-color: #374151; /* Slightly different background */
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* File Upload Area */
+        .file-upload-area {
+            margin-bottom: 1rem;
+        }
+
+        input[type="file"] {
+            background-color: #4A5568;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* JSON Data Area */
+        #jsonData {
+            background-color: #374151;
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        #jsonData p {
+            margin-bottom: 0.5em;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .action-button {
+            background-color: #4A5568;
+            color: #E2E8F0;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .action-button:hover {
+            background-color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Chat</h1>
+
+        <div class="input-area">
+            <textarea id="prompt" rows="1" placeholder="Ask anything"></textarea>
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+        <div id="response"></div>
+
+        <div class="action-buttons">
+            <button class="action-button"><i class="fas fa-image"></i> Create Image</button>
+            <button class="action-button"><i class="fas fa-chart-bar"></i> Analyze Data</button>
+            <button class="action-button"><i class="fas fa-lightbulb"></i> Make a Plan</button>
+            <button class="action-button"><i class="fas fa-code"></i> Code</button>
+        </div>
+
+        <div class="file-upload-area">
+            <h2>File Upload</h2>
+            <input type="file" id="fileInput">
+            <button onclick="uploadFile()">Upload</button>
+            <div id="uploadStatus"></div>
+            <div id="jsonData"></div>
+        </div>
+
+        <h2>Streaming</h2>
+        <button onclick="startStream()">Start Stream</button>
+        <div id="streamOutput"></div>
+    </div>
+
+    <script>
+        // JavaScript functions (sendMessage, uploadFile, startStream)
+        // ... (Keep your existing JavaScript code) ...
+
+        async function sendMessage() {
+            const prompt = document.getElementById('prompt').value;
+            const responseDiv = document.getElementById('response');
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                responseDiv.textContent = data.response;
+            } else {
+                responseDiv.textContent = `Error: ${data.error}`;
+            }
+        }
+
+         async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadStatusDiv = document.getElementById('uploadStatus');
+            const jsonDataDiv = document.getElementById('jsonData');  // Get the JSON data div
+            const file = fileInput.files[0];
+
+            if (!file) {
+                uploadStatusDiv.textContent = 'Please select a file.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                uploadStatusDiv.textContent = `File uploaded successfully. URL: ${data.url}`;
+
+                // Clear any previous data
+                jsonDataDiv.innerHTML = '';
+
+                // Iterate through the JSON object and display its properties
+                if (Object.keys(data.json_data).length === 0) {
+                    jsonDataDiv.textContent = "No data extracted."
+                }
+                else{
+                    for (const key in data.json_data) {
+                        if (data.json_data.hasOwnProperty(key)) {
+                            const value = data.json_data[key];
+                            const propertyElement = document.createElement('p');
+                            propertyElement.textContent = `${key}: ${value}`;
+                            jsonDataDiv.appendChild(propertyElement);
+                        }
+                    }
+                }
+            } else {
+                uploadStatusDiv.textContent = `Error: ${data.error}`;
+                jsonDataDiv.textContent = ''; // Clear any previous data
+            }
+        }
+
+        function startStream() {
+            const streamOutput = document.getElementById('streamOutput');
+            streamOutput.textContent = ''; // Clear previous output
+
+            const eventSource = new EventSource('/stream?prompt=Tell me about AWS');  // Example prompt
+
+            eventSource.onmessage = function(event) {
+                streamOutput.textContent += event.data;
+            };
+
+            eventSource.onerror = function(error) {
+                console.error("Stream error", error);
+                streamOutput.textContent = "Error during streaming.";
+                eventSource.close();
+            }
+        }
+    </script>
+</body>
+</html>
