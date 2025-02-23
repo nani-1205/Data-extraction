@@ -1,83 +1,168 @@
+AI Chat Application Documentation
+I. Overview
+Application Name:
+AI Chat
+Description:
+A web application that allows users to chat with an AI, upload files for analysis, and stream real-time AI-generated content. The application utilizes the Google Gemini AI model for natural language processing and image analysis. It also interacts with AWS S3 for file storage and MongoDB for data persistence.
+Purpose:
+Provide a user-friendly interface for interacting with the Google Gemini AI model.
+Enable image analysis and data extraction from uploaded documents.
+Store chat history and extracted data for future reference.
+Target Audience:
+Users who want to interact with AI.
+Developers who need to understand, maintain, or extend the application.
+
+II. Architecture
+Frontend:
+HTML, CSS, JavaScript (with Tailwind CSS for styling).
+Provides the user interface for chat, file upload, and streaming.
+Sends requests to the backend API and displays responses.
+Backend:
+Python (Flask framework) - Handles API requests from the frontend.
+Interacts with:
+Google Gemini AI model (using the google-generativeai library).
+AWS S3 (using boto3).
+MongoDB (using pymongo).
+Implements data extraction and processing logic.
+AWS Infrastructure:
+EC2 instance: Runs the backend application.
+S3 Bucket: Stores uploaded files.
+MongoDB Atlas: Stores persistent data.
+Deployment: PM2 process manager.
+
+III. Technologies Used
+Programming Languages:
+Python
+JavaScript
+HTML
+CSS
+Frameworks/Libraries:
+Flask (Python): Web framework.
+google-generativeai (Python): Google Gemini AI API client.
+boto3 (Python): AWS SDK for Python.
+Pillow (Python): Image processing library.
+pymongo (Python): MongoDB driver.
+python-dotenv (Python): Loads environment variables from a .env file.
+Tailwind CSS (CSS Framework): For styling.
+Font Awesome (CSS Library): For icons.
+Databases:
+MongoDB (using MongoDB Atlas)
+AWS Services:
+EC2, S3
+Process Manager:
+PM2
+Operating System:
+Amazon Linux 2023
+
+IV. Setup and Installation
+A. Prerequisites:
+AWS Account
+Google AI Studio API Key
+Node.js and npm
+MongoDB Compass (Local-system)
+AWS CLI (Optional)
+B. Installation Steps:
+1. Launch an EC2 Instance:
+In the AWS Management Console, go to EC2.
+Click "Launch Instance."
+Choose "Amazon Linux 2023" as your AMI.
+Select an appropriate instance type (e.g., t3.medium).
+Configure instance details (network, subnet, etc.). Ensure the security group allows inbound traffic on ports 80 (HTTP), 443 (HTTPS),5000(For  Accessing front-end) and 22 (SSH) (from your IP only!).
+Create or select a key pair for SSH access.
+Launch the instance.
+2. Connect to your EC2 Instance:
+Use SSH to connect to the instance using the private key associated with your key pair.
+3. Install Dependencies:
 sudo dnf update -y
-sudo dnf install -y python3 python3-pip git gcc make zlib-devel openssl-devel bzip2-devel libffi-devel
+sudo dnf install -y python3 python3-pip git gcc make zlib-devel openssl-devel bzip2-devel libffi-devel nodejs npm
 sudo pip3 install --upgrade pip
 
-
+4. Create Project Directory and Copy Files:
 mkdir my-ai-app
 cd my-ai-app
 
-
+Copy the project files (e.g., app.py, static(index.html) directory, and ecosystem.config.js).
+5. Create Virtual Environment and Install Python Packages:
 python3 -m venv venv
 source venv/bin/activate
+pip install google-generativeai python-dotenv boto3 Pillow flask pymongo
 
 
-pip install flask google-generativeai python-dotenv boto3
+V. Configuration
+.env File:
+Create a .env file in the project root directory:
+GOOGLE_API_KEY=YOUR_GOOGLE_AI_STUDIO_API_KEY
+S3_BUCKET=YOUR_S3_BUCKET_NAME
+S3_ACCESS_KEY=YOUR_AWS_ACCESS_KEY_ID
+S3_SECRET_KEY=YOUR_AWS_SECRET_ACCESS_KEY
+MONGO_URI=YOUR_MONGO_URI
+DATABASE_NAME=ai_data
+COLLECTION_NAME=image_data
+
+Replace YOUR_... with actual values.
+PM2 Configuration (ecosystem.config.js):
+module.exports = {
+  apps: [{
+    name: "my-ai-app",
+    script: "app.py",
+    interpreter: 'python3',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: "production",
+      MONGO_URI: "YOUR_MONGO_URI",
+      DATABASE_NAME: "ai_data",
+      COLLECTION_NAME: "image_data",
+      S3_BUCKET: "YOUR_S3_BUCKET_NAME",
+      S3_ACCESS_KEY: "YOUR_AWS_ACCESS_KEY_ID",
+      S3_SECRET_KEY: "YOUR_AWS_SECRET_ACCESS_KEY",
+      GOOGLE_API_KEY: "YOUR_GOOGLE_AI_STUDIO_API_KEY"
+    },
+  }]
+};
+
+Replace YOUR_... with actual values.
+
+VI. Running the Application
+1. Start the Application with PM2:
+pm2 start ecosystem.config.js
+
+2. Set Up Startup Script:
+pm2 startup systemd
+pm2 save
+
+3. Access the Application:
+Open a web browser and go to http://<your-ec2-public-ip>:5000.
+If configured with Nginx, use http://your-domain.com or https://your-domain.com.
+
+VII. API Endpoints
+POST /chat:
+Sends a chat prompt to the Google Gemini AI model.
+Request Body: { "prompt": "Your chat message" }
+Response: { "response": "AI's response" }
+POST /upload:
+Uploads an image file for analysis.
+Request Body: Multipart form-data with a file named file.
+Response: JSON with extracted data and S3 file URL.
+GET /stream:
+Streams real-time AI-generated content.
+Response: Server-Sent Events (SSE) stream.
+
+VIII. MongoDB Data Model
+Example document stored in MongoDB:
+{
+  "_id": { "$oid": "67ba02bc4c47b935d02fc5f1" },
+  "country": "SINGAPORE",
+  "residence_type": "VISA",
+  "passport_number": "AB4789971",
+  "name": "KANJOO AHMED MUSTAFA",
+  "issue_date": "2013/02/15",
+  "expiry_date": "2013/04/19",
+  "file_url": "https://aiworkwithgoogle.s3.amazonaws.com/hqdefault.jpg"
+}
 
 
-python app.py
-
-mkdir static
-cd static
 
 
-Run the Flask Application:
-
-python app.py
-
-
-The error message "Address already in use, Port 5000 is in use by another program" means that another application is already listening on port 5000 on your server. When you try to start your Flask application, it can't bind to that port because it's already taken.
-
-Here's how to resolve this:
-
-1. Identify the Process Using Port 5000
-
-Use the netstat or ss command to find the process ID (PID) of the application using port 5000.
-
-netstat (may not be available on all systems by default):
-
-sudo netstat -tulpn | grep 5000
-
-ss (more modern and often preferred):
-
-sudo ss -tulpn | grep 5000
-
-The output will show you the PID of the process using port 5000. For example:
-
-tcp   0   0 0.0.0.0:5000   0.0.0.0:*   LISTEN  1234/python
-
-2. Stop the Process
-
-Once you have the PID, you can stop the process using the kill command:
-
-sudo kill 1234  # Replace 1234 with the actual PID
-
-
-If the process doesn't stop with kill, you can use kill -9 to force it to stop (but be careful with this, as it can cause data loss if the process is writing to disk):
-
-sudo kill -9 1234
-
-
-3. Determine the Cause (and Prevent Future Conflicts)
-
-The most important question is: What program is already running on port 5000? There are a few common possibilities:
-
-Previous Instance of Your Flask App: You might have accidentally left a previous instance of your Flask application running in the background. Stopping it (as described above) is the solution.
-
-Another Application: Some other application on your server might be configured to use port 5000. You'll need to identify that application and either:
-
-Reconfigure it to use a different port.
-
-Stop it if you don't need it.
-
-Change your Flask application to use a different port.
-
-Flask Development Server Not Shut Down Properly: If you were previously running the Flask development server and closed the terminal without properly stopping the server (e.g., by pressing Ctrl+C), the server might still be running in the background.
-
-4. Change Your Flask Application Port (If Necessary)
-
-If you can't stop the other application using port 5000, you can change the port that your Flask application uses. Modify the app.run() line in your app.py file:
-
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)  # Changed port to 5001

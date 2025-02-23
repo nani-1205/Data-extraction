@@ -150,10 +150,6 @@
             <div id="uploadStatus"></div>
             <div id="jsonData"></div>
         </div>
-
-        <h2>Streaming</h2>
-        <button onclick="startStream()">Start Stream</button>
-        <div id="streamOutput"></div>
     </div>
 
     <script>
@@ -226,22 +222,6 @@
             }
         }
 
-        function startStream() {
-            const streamOutput = document.getElementById('streamOutput');
-            streamOutput.textContent = ''; // Clear previous output
-
-            const eventSource = new EventSource('/stream?prompt=Tell me about AWS');  // Example prompt
-
-            eventSource.onmessage = function(event) {
-                streamOutput.textContent += event.data;
-            };
-
-            eventSource.onerror = function(error) {
-                console.error("Stream error", error);
-                streamOutput.textContent = "Error during streaming.";
-                eventSource.close();
-            }
-        }
     </script>
 </body>
 </html>
